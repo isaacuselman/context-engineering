@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phase 0 — Context Engineering for Claude Code</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --ink: #222;
+    --muted: #6b6b63;
+    --rule: #e5e2d9;
+    --accent: #5f7161;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: Charter, Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+  a { color: var(--accent); }
+  a:hover { text-decoration: underline; }
+  input[type="checkbox"] { accent-color: var(--accent); }
+
+  aside {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px;
+    padding: 1.75rem 1.25rem;
+    border-right: 1px solid var(--rule);
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  aside h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 1rem 0;
+  }
+  aside ol { list-style: none; margin: 0; padding: 0; }
+  aside li { margin: 0 0 0.55rem 0; display: flex; align-items: baseline; gap: 0.55rem; }
+  aside a.nav-link {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+  aside a.nav-link.current { color: var(--accent); font-weight: 600; }
+  aside a.nav-link:hover { text-decoration: underline; }
+  aside .num { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+
+  main {
+    margin-left: 260px;
+    max-width: 700px;
+    padding: 2.5rem 1.75rem 5rem;
+  }
+  @media (max-width: 899px) {
+    aside { position: static; width: auto; border-right: 0; border-bottom: 1px solid var(--rule); }
+    main { margin-left: 0; padding: 1.5rem 1.25rem 3rem; max-width: none; }
+  }
+
+  article h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 0.5rem; }
+  article h2 { font-size: 1.2rem; margin: 2rem 0 0.6rem; }
+  article h3 { font-size: 1.02rem; margin: 1.4rem 0 0.4rem; }
+  article p, article li { font-size: 1rem; }
+  article code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: #f1ede1;
+    padding: 0.08em 0.32em;
+    border-radius: 3px;
+  }
+  article pre {
+    background: #f1ede1;
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    font-size: 0.88rem;
+  }
+  article pre code { background: transparent; padding: 0; }
+  article blockquote {
+    margin: 1rem 0;
+    padding: 0.3rem 1rem;
+    border-left: 3px solid var(--accent);
+    color: var(--muted);
+    font-style: italic;
+  }
+  article table { border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
+  article th, article td { border: 1px solid var(--rule); padding: 0.4rem 0.7rem; text-align: left; }
+  article th { background: #f1ede1; }
+
+  .exercise-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .exercise-footer label {
+    display: block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    font-family: Charter, Georgia, serif;
+    font-size: 0.98rem;
+    line-height: 1.5;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: #fffdf7;
+    color: var(--ink);
+    resize: vertical;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+
+  .actions { margin-top: 1rem; display: flex; align-items: center; gap: 1rem; }
+  button.mark {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button.mark.done { background: transparent; color: var(--accent); }
+  button.mark:hover { filter: brightness(1.05); }
+  .save-status { font-size: 0.85rem; color: var(--muted); }
+
+  .index-list { margin: 0; padding: 0; list-style: none; }
+  .index-list li {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  .index-list li:last-child { border-bottom: 0; }
+  .index-list a { font-size: 1.05rem; text-decoration: none; }
+  .index-list a:hover { text-decoration: underline; }
+  .index-list .num { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.5rem; }
+
+  .error { color: #a53232; }
+</style>
+</head>
+<body>
+
+<aside>
+  <h2>Phase 0</h2>
+  <ol id="nav"></ol>
+</aside>
+
+<main id="main" aria-live="polite">
+  <p>Loading…</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
+<script>
+  const EXERCISES = [
+    { id: 1, slug: "01-claudemd-basics",       title: "CLAUDE.md basics" },
+    { id: 2, slug: "02-context-window-budget", title: "Context window budget" },
+    { id: 3, slug: "03-subagent-design",       title: "Subagent design" },
+    { id: 4, slug: "04-spec-writing",          title: "Spec writing" },
+    { id: 5, slug: "05-task-decomposition",    title: "Task decomposition" },
+    { id: 6, slug: "06-capstone",              title: "Capstone" },
+  ];
+
+  const isDone = (id) => localStorage.getItem(`completed-${id}`) === "true";
+  const setDone = (id, v) => localStorage.setItem(`completed-${id}`, v ? "true" : "false");
+  const getNote = (id) => localStorage.getItem(`notes-${id}`) || "";
+  const setNote = (id, v) => localStorage.setItem(`notes-${id}`, v);
+
+  function renderNav(currentId) {
+    const nav = document.getElementById("nav");
+    nav.innerHTML = "";
+    for (const ex of EXERCISES) {
+      const li = document.createElement("li");
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isDone(ex.id);
+      cb.setAttribute("aria-label", `Exercise ${ex.id} completed`);
+      cb.addEventListener("change", () => {
+        setDone(ex.id, cb.checked);
+        renderNav(currentId);
+      });
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(ex.id).padStart(2, "0");
+      const a = document.createElement("a");
+      a.className = "nav-link" + (ex.id === currentId ? " current" : "");
+      a.href = `#/exercise/${ex.id}`;
+      a.textContent = ex.title;
+      li.append(cb, num, a);
+      nav.appendChild(li);
+    }
+  }
+
+  function parseRoute() {
+    const m = location.hash.match(/^#\/exercise\/(\d+)$/);
+    if (!m) return { kind: "index" };
+    const id = parseInt(m[1], 10);
+    const ex = EXERCISES.find((e) => e.id === id);
+    return ex ? { kind: "exercise", ex } : { kind: "index" };
+  }
+
+  function renderIndex() {
+    const main = document.getElementById("main");
+    const completed = EXERCISES.filter((e) => isDone(e.id)).length;
+    const items = EXERCISES.map((e) => {
+      const mark = isDone(e.id) ? "✓" : "·";
+      return `<li>
+        <span class="num">${mark}</span>
+        <a href="#/exercise/${e.id}">${String(e.id).padStart(2, "0")} — ${e.title}</a>
+      </li>`;
+    }).join("");
+    main.innerHTML = `
+      <article>
+        <h1>Phase 0: Context Engineering for Claude Code</h1>
+        <p>Six exercises on writing CLAUDE.md files, budgeting context, designing subagents, writing specs, and decomposing tasks. Source material and primary citations in <a href="docs/source-material.md">docs/source-material.md</a>.</p>
+        <p><strong>${completed} of ${EXERCISES.length}</strong> completed.</p>
+        <ul class="index-list">${items}</ul>
+        <h2>How to use this</h2>
+        <p>Work through the exercises in order. Each one ends with a concrete artifact to produce and a "lessons learned" textarea for reflection. Your progress is saved in this browser's localStorage.</p>
+        <p>The platform itself is the Phase 0 capstone — it was built using the context-engineering practices the exercises teach. See <a href="#/exercise/6">Exercise 6</a> for the retrospective prompt.</p>
+      </article>`;
+  }
+
+  async function renderExercise(ex) {
+    const main = document.getElementById("main");
+    main.innerHTML = `<p>Loading exercise ${ex.id}…</p>`;
+    let md;
+    try {
+      const res = await fetch(`exercises/${ex.slug}.md`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      md = await res.text();
+    } catch (err) {
+      main.innerHTML = `<article>
+        <h1>Exercise ${ex.id}: ${ex.title}</h1>
+        <p class="error">Couldn't load <code>exercises/${ex.slug}.md</code>: ${err.message}</p>
+        <p>If you opened this page via <code>file://</code>, your browser blocked the fetch. Serve the directory over HTTP instead:</p>
+        <pre><code>python3 -m http.server 8000</code></pre>
+        <p>Then visit <a href="http://localhost:8000/">http://localhost:8000/</a>.</p>
+      </article>`;
+      return;
+    }
+
+    const html = marked.parse(md);
+    const done = isDone(ex.id);
+    const notes = getNote(ex.id);
+
+    main.innerHTML = `
+      <article id="content"></article>
+      <section class="exercise-footer">
+        <label for="notes">Lessons learned — autosaved on blur</label>
+        <textarea id="notes" placeholder="What did you try? What surprised you? What would you do differently?"></textarea>
+        <div class="actions">
+          <button id="mark" class="mark ${done ? "done" : ""}" type="button">
+            ${done ? "✓ Marked complete — click to undo" : "Mark complete"}
+          </button>
+          <span id="save-status" class="save-status"></span>
+        </div>
+      </section>`;
+
+    document.getElementById("content").innerHTML = html;
+
+    const ta = document.getElementById("notes");
+    ta.value = notes;
+    const status = document.getElementById("save-status");
+    ta.addEventListener("blur", () => {
+      setNote(ex.id, ta.value);
+      status.textContent = "Saved.";
+      setTimeout(() => { status.textContent = ""; }, 1600);
+    });
+
+    const btn = document.getElementById("mark");
+    btn.addEventListener("click", () => {
+      const next = !isDone(ex.id);
+      setDone(ex.id, next);
+      btn.classList.toggle("done", next);
+      btn.textContent = next ? "✓ Marked complete — click to undo" : "Mark complete";
+      renderNav(ex.id);
+    });
+  }
+
+  function render() {
+    const route = parseRoute();
+    if (route.kind === "index") {
+      renderNav(null);
+      renderIndex();
+      document.title = "Phase 0 — Context Engineering";
+    } else {
+      renderNav(route.ex.id);
+      renderExercise(route.ex);
+      document.title = `${route.ex.title} — Phase 0`;
+    }
+    window.scrollTo({ top: 0 });
+  }
+
+  window.addEventListener("hashchange", render);
+  render();
+</script>
+</body>
+</html>
