@@ -17,7 +17,7 @@
     --error: #a53232;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #1a1a17;
       --ink: #e8e6dc;
       --muted: #9c9989;
@@ -28,6 +28,17 @@
       --on-accent: #1a1a17;
       --error: #d97a7a;
     }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1a17;
+    --ink: #e8e6dc;
+    --muted: #9c9989;
+    --rule: #2e2c26;
+    --accent: #88a18a;
+    --code-bg: #26241e;
+    --input-bg: #1f1d18;
+    --on-accent: #1a1a17;
+    --error: #d97a7a;
   }
   html { color-scheme: light dark; }
   * { box-sizing: border-box; }
@@ -167,13 +178,53 @@
   .index-list .num { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.5rem; }
 
   .error { color: var(--error); }
+
+  .theme-control {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .theme-control label {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+  .theme-control select {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.5rem;
+    background: var(--input-bg);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    width: 100%;
+  }
+  .theme-control select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 </style>
+<script>
+  // Anti-FOUC: apply saved theme before first paint.
+  (function () {
+    var t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
 </head>
 <body>
 
 <aside>
   <h2>Phase 0</h2>
   <ol id="nav"></ol>
+  <div class="theme-control">
+    <label for="theme-select">Theme</label>
+    <select id="theme-select">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
 </aside>
 
 <main id="main" aria-live="polite">
@@ -322,8 +373,23 @@
     window.scrollTo({ top: 0 });
   }
 
+  function initThemePicker() {
+    const sel = document.getElementById("theme-select");
+    sel.value = localStorage.getItem("theme") || "system";
+    sel.addEventListener("change", () => {
+      if (sel.value === "system") {
+        document.documentElement.removeAttribute("data-theme");
+        localStorage.removeItem("theme");
+      } else {
+        document.documentElement.setAttribute("data-theme", sel.value);
+        localStorage.setItem("theme", sel.value);
+      }
+    });
+  }
+
   window.addEventListener("hashchange", render);
   render();
+  initThemePicker();
 </script>
 </body>
 </html>
