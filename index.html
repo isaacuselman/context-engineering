@@ -11,7 +11,25 @@
     --muted: #6b6b63;
     --rule: #e5e2d9;
     --accent: #5f7161;
+    --code-bg: #f1ede1;
+    --input-bg: #fffdf7;
+    --on-accent: #fff;
+    --error: #a53232;
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a17;
+      --ink: #e8e6dc;
+      --muted: #9c9989;
+      --rule: #2e2c26;
+      --accent: #88a18a;
+      --code-bg: #26241e;
+      --input-bg: #1f1d18;
+      --on-accent: #1a1a17;
+      --error: #d97a7a;
+    }
+  }
+  html { color-scheme: light dark; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
   body {
@@ -69,12 +87,12 @@
   article code {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: 0.92em;
-    background: #f1ede1;
+    background: var(--code-bg);
     padding: 0.08em 0.32em;
     border-radius: 3px;
   }
   article pre {
-    background: #f1ede1;
+    background: var(--code-bg);
     border-radius: 4px;
     padding: 0.9rem 1rem;
     overflow-x: auto;
@@ -90,7 +108,7 @@
   }
   article table { border-collapse: collapse; margin: 1rem 0; font-size: 0.95rem; }
   article th, article td { border: 1px solid var(--rule); padding: 0.4rem 0.7rem; text-align: left; }
-  article th { background: #f1ede1; }
+  article th { background: var(--code-bg); }
 
   .exercise-footer {
     margin-top: 2.5rem;
@@ -114,7 +132,7 @@
     padding: 0.75rem 0.9rem;
     border: 1px solid var(--rule);
     border-radius: 4px;
-    background: #fffdf7;
+    background: var(--input-bg);
     color: var(--ink);
     resize: vertical;
   }
@@ -127,7 +145,7 @@
     padding: 0.5rem 1rem;
     border: 1px solid var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     border-radius: 4px;
     cursor: pointer;
   }
@@ -148,7 +166,7 @@
   .index-list a:hover { text-decoration: underline; }
   .index-list .num { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.5rem; }
 
-  .error { color: #a53232; }
+  .error { color: var(--error); }
 </style>
 </head>
 <body>
